@@ -58,29 +58,57 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :param num_classes: Number of classes to classify
     :return: The Tensor for the last layer of output
     """
-    # TODO: Implement function 3rd and 4rd pooling layers
-    #convolution
-    conv_1x1_7 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))#, kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
-	#upsample							
-    output_7 = tf.layers.conv2d_transpose(conv_1x1_7, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    ## TODO: Implement function 3rd and 4rd pooling layers
+    ##convolution
+    #conv_1x1_7 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))#, kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+	##upsample							
+    #output_7 = tf.layers.conv2d_transpose(conv_1x1_7, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
     
-    #convolution
-    conv_1x1_4 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
-	#add skip connection									
-    output_1 = tf.add(output_7, conv_1x1_4)
+    ##convolution
+    #conv_1x1_4 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+	##add skip connection									
+    #output_1 = tf.add(output_7, conv_1x1_4)
 	
-	#upsample
-    output_2 = tf.layers.conv2d_transpose(output_1, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+	##upsample
+    #output_2 = tf.layers.conv2d_transpose(output_1, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 	
-	#convolution
-    conv_1x1_3 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
-	#add skip connection
-    output_3 = tf.add(output_2, conv_1x1_3)
+	##convolution
+    #conv_1x1_3 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+	##add skip connection
+    #output_3 = tf.add(output_2, conv_1x1_3)
 	
-	#upsample
-    output_4 = tf.layers.conv2d_transpose(output_3, num_classes, 16, 8, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+	##upsample
+    #output_4 = tf.layers.conv2d_transpose(output_3, num_classes, 16, 8, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
     
-    return output_4
+    #return output_4
+    
+    init = tf.truncated_normal_initializer(stddev = 0.01)
+    
+    def conv_1x1(x, num_classes, init = init):
+        return tf.layers.conv2d(x, num_classes, 1, padding = 'same', kernel_initializer = init)
+
+    def upsample(x, num_classes, depth, strides, init = init):
+        return tf.layers.conv2d_transpose(x, num_classes, depth, strides, padding = 'same', kernel_initializer = init)
+    
+    layer_7_1x1 = conv_1x1(vgg_layer7_out, num_classes)
+    layer_4_1x1 = conv_1x1(vgg_layer4_out, num_classes)
+    layer_3_1x1 = conv_1x1(vgg_layer3_out, num_classes)
+
+    #implement the first transposed convolution layer
+    upsample1 = upsample(layer_7_1x1, num_classes, 5, 2)
+    layer1 = tf.layers.batch_normalization(upsample1)
+    #add the first skip connection from the layer_4_1x1    
+    layer1 = tf.add(layer1, layer_4_1x1)
+
+    #implement the another transposed convolution layer
+    upsample2 = upsample(layer1, num_classes, 5, 2)
+    layer2 = tf.layers.batch_normalization(upsample2)
+    #add the second skip connection from the layer_3_1x1        
+    layer2 = tf.add(layer2, layer_3_1x1)
+
+    return upsample(layer2, num_classes, 14, 8)    
+
+    
 tests.test_layers(layers)
 
 
@@ -150,7 +178,7 @@ def run():
     tests.test_for_kitti_dataset(data_dir)
     l_rate = 1e-4
     EPOCHS = 10
-    BATCH_SIZE = 16
+    BATCH_SIZE = 4
     learning_rate = tf.constant(l_rate)
     #dropout = 0.5 # Dropout, probability to keep units
     #keep_prob = tf.placeholder(tf.float32) #dropout (keep probability)
