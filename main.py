@@ -62,25 +62,25 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
 
     ## TODO: Implement function 3rd and 4rd pooling layers
     ##convolution
-    conv_1x1_7 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param))#, kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    conv_1x1_7 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param) , kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))#, kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 	##upsample							
-    output_1 = tf.layers.conv2d_transpose(conv_1x1_7, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param))
+    output_1 = tf.layers.conv2d_transpose(conv_1x1_7, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
     
     ##convolution
-    conv_1x1_4 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param))
+    conv_1x1_4 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 	##add skip connection									
     output_2 = tf.add(output_1, conv_1x1_4)
 	
 	##upsample
-    output_3 = tf.layers.conv2d_transpose(output_2, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param))
+    output_3 = tf.layers.conv2d_transpose(output_2, num_classes, 4, 2, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 	
 	##convolution
-    conv_1x1_3 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param))
+    conv_1x1_3 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 	##add skip connection
     output_4 = tf.add(output_3, conv_1x1_3)
 	
 	##upsample
-    output_5 = tf.layers.conv2d_transpose(output_4, num_classes, 16, 8, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param))
+    output_5 = tf.layers.conv2d_transpose(output_4, num_classes, 16, 8, padding='same', kernel_regularizer=tf.contrib.layers.l2_regularizer(reg_param), kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
     
     return output_5
     
@@ -152,7 +152,7 @@ def run():
     runs_dir = './runs'
     tests.test_for_kitti_dataset(data_dir)
     l_rate = 1e-4
-    EPOCHS = 15
+    EPOCHS = 20
     BATCH_SIZE = 4
     learning_rate = tf.constant(l_rate)
     #dropout = 0.5 # Dropout, probability to keep units
